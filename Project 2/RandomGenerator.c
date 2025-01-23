@@ -1,6 +1,5 @@
 # include <stdio.h>
 # include <stdlib.h>
-# include <time.h>
 
 typedef struct{
     char name;
@@ -17,6 +16,32 @@ typedef struct{
     int seed;
     int idleTime;
 } Seeds;
+
+void generateProcesses(Process processes[], int count, int seed){
+    srand(seed);
+    for (int i=0; i<count; i++){
+        processes[i].name = 'a' + i;
+        processes[i].arrivalTime = rand()%100;
+        processes[i].runTime = rand()%10 + 1;
+        processes[i].priority = rand()%4 + 1;
+        processes[i].remainingTime = processes[i].runTime;
+        processes[i].startTime = -1;
+        processes[i].endTime = 0;
+        processes[i].executedTime = 0;
+    }
+}
+
+void sortProcesses(Process processes[], int count){
+    for (int i=0; i<count-1; i++){
+        for (int j=i+1; j<count; j++){
+            if (processes[j].arrivalTime<processes[i].arrivalTime){
+                Process temp = processes[j];
+                processes[j] = processes[i];
+                processes[i] = temp;
+            }
+        }
+    }
+}
 
 void seedGenerator(Seeds bestSeeds[]){
     Seeds seeds[10000];
@@ -54,40 +79,5 @@ void seedGenerator(Seeds bestSeeds[]){
     }
     for (int i=0;i<5;i++){
         bestSeeds[i] = seeds[i];
-    }
-
-}
-
-void generateProcesses(Process processes[], int count, int seed){
-    srand(seed);
-    for (int i=0; i<count; i++){
-        processes[i].name = 'a' + i;
-        processes[i].arrivalTime = rand()%100;
-        processes[i].runTime = rand()%10 + 1;
-        processes[i].priority = rand()%4 + 1;
-        processes[i].remainingTime = processes[i].runTime;
-        processes[i].startTime = -1;
-        processes[i].endTime = 0;
-        processes[i].executedTime = 0;
-    }
-}
-
-void sortProcesses(Process processes[], int count){
-    for (int i=0; i<count-1; i++){
-        for (int j=i+1; j<count; j++){
-            if (processes[j].arrivalTime<processes[i].arrivalTime){
-                Process temp = processes[j];
-                processes[j] = processes[i];
-                processes[i] = temp;
-            }
-        }
-    }
-}
-
-int main(){
-    Seeds bestSeeds[5];
-    seedGenerator(bestSeeds);
-    for(int i=0; i<5; i++){
-        printf("For seed : %d, CPU Idle Time is : %d\n", bestSeeds[i].seed, bestSeeds[i].idleTime);
     }
 }
