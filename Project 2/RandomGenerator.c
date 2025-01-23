@@ -17,6 +17,7 @@ typedef struct{
     int idleTime;
 } Seeds;
 
+
 void generateProcesses(Process processes[], int count, int seed){
     srand(seed);
     for (int i=0; i<count; i++){
