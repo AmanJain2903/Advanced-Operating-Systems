@@ -18,7 +18,8 @@ typedef struct{
     int idleTime;
 } Seeds;
 
-void seedGenerator(Seeds seeds[]){
+void seedGenerator(Seeds bestSeeds[]){
+    Seeds seeds[10000];
     Process processes[10];
     Process process;
     int idleTime;
@@ -51,6 +52,9 @@ void seedGenerator(Seeds seeds[]){
             }
         }
     }
+    for (int i=0;i<5;i++){
+        bestSeeds[i] = seeds[i];
+    }
 
 }
 
@@ -81,9 +85,9 @@ void sortProcesses(Process processes[], int count){
 }
 
 int main(){
-    Seeds seeds[10000];
-    seedGenerator(seeds);
+    Seeds bestSeeds[5];
+    seedGenerator(bestSeeds);
     for(int i=0; i<5; i++){
-        printf("For seed : %d, CPU Idle Time is : %d\n", seeds[i].seed, seeds[i].idleTime);
+        printf("For seed : %d, CPU Idle Time is : %d\n", bestSeeds[i].seed, bestSeeds[i].idleTime);
     }
 }
