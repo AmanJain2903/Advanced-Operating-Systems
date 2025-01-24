@@ -2,6 +2,7 @@
 # include <stdlib.h>
 # include <time.h>
 # include <limits.h>
+
 typedef struct{
     char name;
     int arrivalTime;
@@ -94,6 +95,7 @@ void srtf(Process processes[], int count) {
 			if(processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0 && processes[i].remainingTime < minRemaining) {
 				shortest = i;
 				minRemaining = processes[i].remainingTime;
+				processes[i].startTime = currentTime;
 				isRunning = 1;	
 			}
 		}
@@ -106,20 +108,71 @@ void srtf(Process processes[], int count) {
 		if(processes[shortest].remainingTime==0) {
 			completed++;
 			isRunning=0;
-			completion_time = currentTime+1;
-			turnaround_time = completion_time - processes[shortest].arrivalTime;
-			wait_time = turnaround_time - processes[shortest].runTime;
+			processes[shortest].endTime = currentTime+1;
 			minRemaining = INT_MAX;
-			printf("Process_Shortest: %d, CompletionTime: %d, TurnAroundTime: %d, WaitTime: %d",shortest,completion_time,turnaround_time,wait_time);
-			//calculateMetrics(completion_time,turnaround_time,wait_time);
 		}
 		currentTime++;
 	}
 }
-/*int main(){
-    Seeds bestSeeds[5];
-    seedGenerator(bestSeeds);
-    for(int i=0; i<5; i++){
-        printf("For seed : %d, CPU Idle Time is : %d\n", bestSeeds[i].seed, bestSeeds[i].idleTime);
+
+
+void runFCFS(Process processes[], int count) {
+    int currentTime = 0;
+    for (int i = 0; i < count; i++) {
+        if (processes[i].arrivalTime > currentTime) {
+            currentTime = processes[i].arrivalTime;
+        }
+        processes[i].startTime = currentTime;
+        processes[i].endTime = currentTime + processes[i].runTime;
+        currentTime = processes[i].endTime;
     }
-}*/
+}
+
+void runSJF(Process processes[], int count) {
+    int completed = 0, currentTime = 0;
+
+    while (completed < count) {
+        int minIndex = -1, minRunTime = INT_MAX;
+        for (int i = 0; i < count; i++) {
+            if (processes[i].remainingTime > 0 && processes[i].arrivalTime <= currentTime) {
+                if (processes[i].runTime < minRunTime) {
+                    minRunTime = processes[i].runTime;
+                    minIndex = i;
+                }
+            }
+        }
+
+        if (minIndex != -1) {
+            processes[minIndex].startTime = currentTime;
+            currentTime += processes[minIndex].runTime;
+            processes[minIndex].remainingTime = 0;
+            processes[minIndex].endTime = currentTime;
+            completed++;
+        } 
+        else {
+            currentTime++;
+        }
+    }
+}
+
+void calculateMetrics(Process processes[], int count, float *avgTurnaround, float *avgWaiting, float *avgResponse, int *throughput) {
+    int totalTurnaround = 0, totalWaiting = 0, totalResponse = 0;
+    int completedProcesses = 0;
+
+    for (int i = 0; i < count; i++) {
+        if (processes[i].endTime > 0) {
+            int turnaround = processes[i].endTime - processes[i].arrivalTime;
+            int waiting = turnaround - processes[i].runTime;
+            int response = processes[i].startTime - processes[i].arrivalTime;
+
+            totalTurnaround += turnaround;
+            totalWaiting += waiting;
+            totalResponse += response;
+            completedProcesses++;
+        }
+    }
+    *avgTurnaround = totalTurnaround / (float)completedProcesses;
+    *avgWaiting = totalWaiting / (float)completedProcesses;
+    *avgResponse = totalResponse / (float)completedProcesses;
+    *throughput = completedProcesses;
+}
