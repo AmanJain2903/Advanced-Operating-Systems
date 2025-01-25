@@ -1,5 +1,8 @@
+#include <stdbool.h>
 #ifndef COMMON_HEADER_H
 #define COMMON_HEADER_H
+#define MAX_PROCESSES 100
+#define MAX_PRIORITY 4
 
 typedef struct{
     char name;
@@ -10,6 +13,7 @@ typedef struct{
     int startTime;
     int endTime;
     int executedTime;
+    bool started;
 } Process;
 
 typedef struct{
@@ -17,12 +21,23 @@ typedef struct{
     int idleTime;
 } Seeds;
 
+typedef struct {
+    Process* queue[MAX_PROCESSES];
+    int front;
+    int rear;
+    int size;
+} PriorityQueue;
+
 void seedGenerator(Seeds bestSeeds[]);
 void generateProcesses(Process processes[], int count, int seed);
 void sortProcesses(Process processes[], int count);
 void srtf(Process processes[], int count);
 void runFCFS(Process processes[], int count);
 void runSJF(Process processes[], int count);
+void runHPFP(Process processes[], int count);
+void printStats(Process processes[] , int count , int completedProcesses);
+void resetProcesses(Process processes[], int count);
+void printProcessTable(Process processes[], int count);
 void calculateMetrics(Process processes[], int count, float *avgTurnaround, float *avgWaiting, float *avgResponse, int *throughput);
 
 #endif
