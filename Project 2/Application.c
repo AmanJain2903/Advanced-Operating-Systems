@@ -1,4 +1,5 @@
 # include <stdio.h>
+# include <string.h>
 # include "common_files_header.h"
 
 int main() {
@@ -15,11 +16,16 @@ int main() {
 
         // Generate random processes
         generateProcesses(processes, NUM_PROCESSES, bestSeeds[run].seed);
+        sortProcesses(processes, NUM_PROCESSES);
+        printProcessTable(processes, NUM_PROCESSES);
+        printf("\n");
 
         // FCFS
-        runFCFS(processes, NUM_PROCESSES);
+        char* result = runFCFS(processes, NUM_PROCESSES);
         calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
-        printf("FCFS: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",
+        printf("FCFS Job Sequence : ");
+        printJobSequence(result);
+        printf("FCFS: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n\n",
                avgTurnaround, avgWaiting, avgResponse, throughput); 
         fcfs[0]+=avgTurnaround/5;
         fcfs[1]+=avgWaiting/5;
@@ -27,9 +33,11 @@ int main() {
         resetProcesses(processes, NUM_PROCESSES);
 
         // SJF
-        runSJF(processes, NUM_PROCESSES);
+        result = runSJF(processes, NUM_PROCESSES);
         calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
-        printf("SJF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",
+        printf("SJF Job Sequence : ");
+        printJobSequence(result);
+        printf("SJF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n\n",
                avgTurnaround, avgWaiting, avgResponse, throughput); 
         sjf[0]+=avgTurnaround/5;
         sjf[1]+=avgWaiting/5;
@@ -37,16 +45,21 @@ int main() {
         resetProcesses(processes, NUM_PROCESSES);
 
         //SRTF
-        runSRTF(processes, NUM_PROCESSES);
+        result = runSRTF(processes, NUM_PROCESSES);
         calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
-        printf("SRTF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",
+        printf("SRTF Job Sequence : ");
+        printJobSequence(result);
+        printf("SRTF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n\n",
                avgTurnaround, avgWaiting, avgResponse, throughput);
         srtf[0]+=avgTurnaround/5;
         srtf[1]+=avgWaiting/5;
         srtf[2]+=avgResponse/5;
         resetProcesses(processes, NUM_PROCESSES);
 
+        // HPFP
+        runHPFP(processes, NUM_PROCESSES);       
         printf("\n");
+
     }
 
     printf("\nAVERAGE AFTER RUNNING ON 5 WORKLOADS\n");
