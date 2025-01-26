@@ -36,10 +36,11 @@ void printJobSequence(char* result);
 char* runFCFS(Process processes[], int count);
 char* runSJF(Process processes[], int count);
 char* runSRTF(Process processes[], int count);
-void runHPFP(Process processes[], int count);
-void printStats(Process processes[] , int count , int completedProcesses);
+char* runHPFP(Process processes[], int count);
+void printStats(Process processes[] , int count );
 void calculateMetrics(Process processes[], int count, float *avgTurnaround, float *avgWaiting, float *avgResponse, int *throughput);
 void resetProcesses(Process processes[], int NUM_PROCESSES);
+
 
 #endif
 

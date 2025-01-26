@@ -1,10 +1,37 @@
-#include "common_files_header.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
 # include <limits.h>
 #include <stdbool.h>
-# include <string.h>
+#include <string.h>
+#define MAX_PROCESSES 100
+#define MAX_PRIORITY 4
+
+
+typedef struct{
+    char name;
+    int arrivalTime;
+    int runTime;
+    int priority;
+    int remainingTime;
+    int startTime;
+    int endTime;
+    int executedTime;
+    bool started;
+} Process;
+
+typedef struct{
+    int seed;
+    int idleTime;
+} Seeds;
+
+typedef struct {
+    Process* queue[MAX_PROCESSES];
+    int front;
+    int rear;
+    int size;
+} PriorityQueue;
+
 
 void generateProcesses(Process processes[], int count, int seed){
     srand(seed);
@@ -207,21 +234,17 @@ Process* dequeue(PriorityQueue* pq) {
     return NULL;
 }
 
-// Check if the queue is empty
 bool isEmpty(PriorityQueue* pq) {
     return pq->size == 0;
 }
 
-// Function to run HPF (Preemptive)
-void runHPFP(Process processes[], int count) {
+char* runHPFP(Process processes[], int count) {
     PriorityQueue priorityQueues[MAX_PRIORITY];
     for (int i = 0; i < MAX_PRIORITY; i++) {
         initializeQueue(&priorityQueues[i]);
     }
-
-    printf("\nHighest Priority First Preemptive:\n");
-    printf("Order of Processes in Execution: _");
-
+    char *result = malloc(30);
+    result[0]='\0';
     int currentTime = 0;
     int completedProcesses = 0;
 
@@ -250,7 +273,6 @@ void runHPFP(Process processes[], int count) {
             currentTime++;
             continue;
         }
-
         // Execute the process for 1 quantum
 
         if (!currentProcess->started) {
@@ -270,13 +292,15 @@ void runHPFP(Process processes[], int count) {
         }
 
         currentTime++;
-
-        //  printf("%c ", currentProcess->name);
+        size_t len = strlen(result);
+        result[len] = currentProcess->name;
+        result[len+1]='\0';
     }
-    printStats(processes, count , completedProcesses);
+    return result;
+
 }
 
-void printStats(Process processes[] , int count, int completedProcesses) {
+void printStats(Process processes[] , int count) {
 
     // Initialize the arrays to store the average statistics for each priority level
     double avgTurnaroundTime[MAX_PRIORITY] = {0};
@@ -338,25 +362,9 @@ void printStats(Process processes[] , int count, int completedProcesses) {
 	        printf("-----------------------------------------------------------------------------------------------------------------------------\n");
         }
     }
-
-    double totalAvgTurnaroundTime = 0;
-    double totalAvgWaitingTime = 0;
-    double totalAvgResponseTime = 0;
-    int totalProcesses = 0;
-
-    for (int i = 0; i < MAX_PRIORITY; i++) {
-        totalAvgTurnaroundTime += avgTurnaroundTime[i];
-        totalAvgWaitingTime += avgWaitingTime[i];
-        totalAvgResponseTime += avgResponseTime[i];
-        totalProcesses += priorityProcessCount[i];
-    }
-
-    printf("\nOverall Statistics:\n");
-    printf("Avg Turnaround Time: %.2f\n", totalAvgTurnaroundTime / completedProcesses);
-    printf("Avg Waiting Time: %.2f\n", totalAvgWaitingTime / completedProcesses);
-    printf("Avg Response Time: %.2f\n", totalAvgResponseTime / completedProcesses);
-    printf("Throughput: %d\n", completedProcesses);
 }
+
+
 
 void calculateMetrics(Process processes[], int count, float *avgTurnaround, float *avgWaiting, float *avgResponse, int *throughput) {
     int totalTurnaround = 0, totalWaiting = 0, totalResponse = 0;
@@ -384,5 +392,6 @@ void resetProcesses(Process processes[], int NUM_PROCESSES){
     for(int i =0; i<NUM_PROCESSES; i++){
         processes[i].startTime = processes[i].endTime = 0;
         processes[i].remainingTime = processes[i].runTime;
+        processes[i].started = false; 
     }
 }
