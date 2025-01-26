@@ -121,7 +121,7 @@ void printJobSequence(char* result){
 
 
 char* runFCFS(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0] = '\0';
     int currentTime = 0;
     for (int i = 0; i < count; i++) {
@@ -139,7 +139,7 @@ char* runFCFS(Process processes[], int count) {
 }
 
 char* runSJF(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
     int completed = 0, currentTime = 0;
 
@@ -173,7 +173,7 @@ char* runSJF(Process processes[], int count) {
 }
 
 char* runSRTF(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
 	int currentTime = 0, completed = 0, minRemaining = INT_MAX;
 	int shortest = -1;
@@ -188,6 +188,10 @@ char* runSRTF(Process processes[], int count) {
 				isRunning = 1;	
 			}
 		}
+        processes[shortest].startTime = currentTime;
+        size_t len = strlen(result);
+        result[len] = processes[shortest].name;
+        result[len+1]='\0';
 		if(isRunning==0) {
 			currentTime++;
 			continue;
@@ -243,7 +247,7 @@ char* runHPFP(Process processes[], int count) {
     for (int i = 0; i < MAX_PRIORITY; i++) {
         initializeQueue(&priorityQueues[i]);
     }
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
     int currentTime = 0;
     int completedProcesses = 0;
@@ -300,69 +304,6 @@ char* runHPFP(Process processes[], int count) {
 
 }
 
-void printStats(Process processes[] , int count) {
-
-    // Initialize the arrays to store the average statistics for each priority level
-    double avgTurnaroundTime[MAX_PRIORITY] = {0};
-    double avgWaitingTime[MAX_PRIORITY] = {0};
-    double avgResponseTime[MAX_PRIORITY] = {0};
-    int priorityProcessCount[MAX_PRIORITY] = {0};  // Count of num of processes belong to each priority level
-
-    // Calculate and print statistics for each priority level
-    
-    for (int p = 0; p < MAX_PRIORITY; p++) {
-        printf("\nPriority %d Processes:\n", p + 1);
-        printf("-----------------------------------------------------------------------------------------------------------------------------\n");
-	    printf("Process Name\t| Arrival Time | Start Time | End Time | Run Time | Response Time | Wait Time | Turn Around Time | Priority |\n");
-	    printf("-----------------------------------------------------------------------------------------------------------------------------\n");
-	
-        double totalArrivalTime = 0, totalStartTime = 0, totalEndTime = 0;
-        double totalRunTime = 0, totalWaitTime = 0, totalResponse= 0, totalTurnaroundTime = 0;
-
-        for (int i = 0; i < count; i++) {
-            if (processes[i].priority == p + 1) {
-                int turnaroundTime = processes[i].endTime - processes[i].arrivalTime;
-                int waitTime = turnaroundTime - processes[i].runTime;
-                int response = processes[i].startTime - processes[i].arrivalTime;
-
-                avgTurnaroundTime[p] += turnaroundTime;
-                avgWaitingTime[p] += waitTime;
-                avgResponseTime[p] += (processes[i].startTime - processes[i].arrivalTime);
-                priorityProcessCount[p]++;
-
-                totalArrivalTime += processes[i].arrivalTime;
-                totalStartTime += processes[i].startTime;
-                totalEndTime += processes[i].endTime;
-                totalRunTime += processes[i].runTime;
-                totalWaitTime += waitTime;
-                totalTurnaroundTime += turnaroundTime;
-                totalResponse += response;
-
-                printf("%16c|%14.1d|%12.1d|%10.1d|%10.1d|%15.1d|%11.1d| %17.1d|%10u|\n",
-                       processes[i].name, processes[i].arrivalTime, processes[i].startTime, processes[i].endTime,
-                       processes[i].runTime, response ,waitTime, turnaroundTime, processes[i].priority);
-            }
-        }
-
-        if (priorityProcessCount[p] > 0) {
-            avgTurnaroundTime[p] /= priorityProcessCount[p];
-            avgWaitingTime[p] /= priorityProcessCount[p];
-            avgResponseTime[p] /= priorityProcessCount[p];
-
-	        printf("-----------------------------------------------------------------------------------------------------------------------------\n");
-            printf("%16s|%14.1f|%12.1f|%10.1f|%10.1f|%15.1f|%11.1f| %17.1f|\n"," Average", 
-                   0.0, 
-                   0.0, 
-                   0.0,
-                   0.0, 
-                   totalResponse / priorityProcessCount[p],
-                   totalWaitTime / priorityProcessCount[p],
-                   totalTurnaroundTime / priorityProcessCount[p]
-                );
-	        printf("-----------------------------------------------------------------------------------------------------------------------------\n");
-        }
-    }
-}
 
 
 
