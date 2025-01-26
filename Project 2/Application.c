@@ -57,12 +57,10 @@ int main() {
         resetProcesses(processes, NUM_PROCESSES);
 
         // HPFP
-        runHPFP(processes, NUM_PROCESSES);       
-        printf("\n");
 
-        // HPFP
-
-        runHPFP(processes, NUM_PROCESSES);
+        result = runHPFP(processes, NUM_PROCESSES);
+        printf("HPF Preemptive : ");
+        printJobSequence(result);
         printStats(processes, NUM_PROCESSES);
         calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
         printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",

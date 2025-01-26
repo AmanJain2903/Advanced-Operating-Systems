@@ -1,9 +1,9 @@
-#include "common_files_header.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
 # include <limits.h>
 #include <stdbool.h>
+#include <string.h>
 #define MAX_PROCESSES 100
 #define MAX_PRIORITY 4
 
@@ -238,13 +238,13 @@ bool isEmpty(PriorityQueue* pq) {
     return pq->size == 0;
 }
 
-void runHPFP(Process processes[], int count) {
+char* runHPFP(Process processes[], int count) {
     PriorityQueue priorityQueues[MAX_PRIORITY];
     for (int i = 0; i < MAX_PRIORITY; i++) {
         initializeQueue(&priorityQueues[i]);
     }
-
-    printf("\nHighest Priority First Preemptive:\n");
+    char *result = malloc(30);
+    result[0]='\0';
     int currentTime = 0;
     int completedProcesses = 0;
 
@@ -292,7 +292,11 @@ void runHPFP(Process processes[], int count) {
         }
 
         currentTime++;
+        size_t len = strlen(result);
+        result[len] = currentProcess->name;
+        result[len+1]='\0';
     }
+    return result;
 
 }
 

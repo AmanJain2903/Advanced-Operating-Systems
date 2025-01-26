@@ -39,14 +39,13 @@ bool isEmpty(PriorityQueue* pq) {
 }
 
 // Function to run HPF (Preemptive)
-void runHPFP(Process processes[], int count) {
+char* runHPFP(Process processes[], int count) {
     PriorityQueue priorityQueues[MAX_PRIORITY];
     for (int i = 0; i < MAX_PRIORITY; i++) {
         initializeQueue(&priorityQueues[i]);
     }
-
-    printf("\nHighest Priority First Preemptive:\n");
-
+    char *result = malloc(30);
+    result[0]='\0';
     int currentTime = 0;
     int completedProcesses = 0;
 
@@ -54,7 +53,9 @@ void runHPFP(Process processes[], int count) {
         // Enqueue newly arrived processes
         for (int i = 0; i < count; i++) {
             if (processes[i].arrivalTime == currentTime) {
-                enqueue(&priorityQueues[processes[i].priority - 1], &processes[i]);
+                // Add the process to the queue corresponding to its priority and priority - 1 because priority index starts from 0
+                enqueue(&priorityQueues[processes[i].priority - 1], &processes[i]);  
+
             }
         }
 
@@ -67,13 +68,14 @@ void runHPFP(Process processes[], int count) {
             }
         }
 
-        // If no process is available, CPU idles
+        // If no process is available, move to the next time unit
+
         if (currentProcess == NULL) {
             currentTime++;
             continue;
         }
-
         // Execute the process for 1 quantum
+
         if (!currentProcess->started) {
             currentProcess->startTime = currentTime;
             currentProcess->started = true;
@@ -82,17 +84,21 @@ void runHPFP(Process processes[], int count) {
         currentProcess->remainingTime--;
 
         // If the process completes, mark it
+
         if (currentProcess->remainingTime == 0) {
             currentProcess->endTime = currentTime + 1;
             completedProcesses++;
         } else {
-            // If not completed, re-enqueue the process
             enqueue(&priorityQueues[currentProcess->priority - 1], currentProcess);
         }
 
         currentTime++;
+        size_t len = strlen(result);
+        result[len] = currentProcess->name;
+        result[len+1]='\0';
     }
-    printStats(processes , count , completedProcesses);
+    return result;
+
 }
 
 void printStats(Process processes[] , int count , int completedProcesses) {
