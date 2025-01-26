@@ -121,7 +121,7 @@ void printJobSequence(char* result){
 
 
 char* runFCFS(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0] = '\0';
     int currentTime = 0;
     for (int i = 0; i < count; i++) {
@@ -139,7 +139,7 @@ char* runFCFS(Process processes[], int count) {
 }
 
 char* runSJF(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
     int completed = 0, currentTime = 0;
 
@@ -173,7 +173,7 @@ char* runSJF(Process processes[], int count) {
 }
 
 char* runSRTF(Process processes[], int count) {
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
 	int currentTime = 0, completed = 0, minRemaining = INT_MAX;
 	int shortest = -1;
@@ -188,6 +188,10 @@ char* runSRTF(Process processes[], int count) {
 				isRunning = 1;	
 			}
 		}
+        processes[shortest].startTime = currentTime;
+        size_t len = strlen(result);
+        result[len] = processes[shortest].name;
+        result[len+1]='\0';
 		if(isRunning==0) {
 			currentTime++;
 			continue;
@@ -243,7 +247,7 @@ char* runHPFP(Process processes[], int count) {
     for (int i = 0; i < MAX_PRIORITY; i++) {
         initializeQueue(&priorityQueues[i]);
     }
-    char *result = malloc(30);
+    char *result = malloc(100);
     result[0]='\0';
     int currentTime = 0;
     int completedProcesses = 0;
