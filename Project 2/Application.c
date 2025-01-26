@@ -41,7 +41,11 @@ int main() {
         printf("\n");
 
        // HPFP
-       runHPFP(processes, NUM_PROCESSES);       
+       runHPFP(processes, NUM_PROCESSES); 
+       printf("\n");
+
+       // HPFNP
+       runHPFNP(processes, NUM_PROCESSES);      
        printf("\n");
     }
 

@@ -98,7 +98,7 @@ void runHPFP(Process processes[], int count) {
     printStats(processes , count , completedProcesses);
 }
 
-void printStats(Process processes[] , int count , int completedProcesses){ {
+void printStats(Process processes[] , int count , int completedProcesses) {
 
     // Now we will calculate and print statistics for each priority level
     double avgTurnaroundTime[MAX_PRIORITY] = {0};

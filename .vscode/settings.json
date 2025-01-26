@@ -5,5 +5,8 @@
         "fcfs.h": "c",
         "metrics.h": "c",
         "limits.h": "c"
+    },
+    "files.watcherExclude": {
+        "**/target": true
     }
 }

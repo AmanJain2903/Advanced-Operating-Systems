@@ -35,6 +35,7 @@ void srtf(Process processes[], int count);
 void runFCFS(Process processes[], int count);
 void runSJF(Process processes[], int count);
 void runHPFP(Process processes[], int count);
+void runHPFNP(Process processes[], int count);
 void printStats(Process processes[] , int count , int completedProcesses);
 void resetProcesses(Process processes[], int count);
 void printProcessTable(Process processes[], int count);
