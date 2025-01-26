@@ -47,6 +47,20 @@ int main() {
         resetProcesses(processes, NUM_PROCESSES);
 
         printf("\n");
+
+        // HPFP
+
+        runHPFP(processes, NUM_PROCESSES);
+        printStats(processes, NUM_PROCESSES);
+        calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
+        printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",
+               avgTurnaround, avgWaiting, avgResponse, throughput);
+        srtf[0]+=avgTurnaround/5;
+        srtf[1]+=avgWaiting/5;
+        srtf[2]+=avgResponse/5;
+        resetProcesses(processes, NUM_PROCESSES);
+        printf("\n");
+
     }
 
     printf("\nAVERAGE AFTER RUNNING ON 5 WORKLOADS\n");
@@ -55,6 +69,8 @@ int main() {
     printf("SJF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                sjf[0], sjf[1], sjf[2]); 
     printf("SRTF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
+               srtf[0], srtf[1], srtf[2]); 
+    printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                srtf[0], srtf[1], srtf[2]); 
 
     return 0;
