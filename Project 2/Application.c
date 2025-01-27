@@ -9,7 +9,7 @@ int main() {
     int throughput;
     Seeds bestSeeds[5];
     seedGenerator(bestSeeds);
-    float fcfs[3], sjf[3], srtf[3], hpfp[3];
+    float fcfs[3], sjf[3], srtf[3], hpfp[3], hpfnp[3];
 
     for (int run = 0; run < 5; run++) {
         printf("Run #%d:\n", run + 1);
@@ -70,6 +70,20 @@ int main() {
         resetProcesses(processes, NUM_PROCESSES);
         printf("\n");
 
+        // HPFNP
+
+       result = runHPFNP(processes, NUM_PROCESSES);
+       printf("HPF Non-Preemptive Job Sequence : ");
+       printJobSequence(result);
+       calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
+       printf("HPF_NP: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n",
+              avgTurnaround, avgWaiting, avgResponse, throughput);
+       hpfnp[0]+=avgTurnaround/5;
+       hpfnp[1]+=avgWaiting/5;
+       hpfnp[2]+=avgResponse/5;
+       resetProcesses(processes, NUM_PROCESSES);
+       printf("\n");
+
     }
 
     printf("\nAVERAGE AFTER RUNNING ON 5 WORKLOADS\n");
@@ -81,6 +95,8 @@ int main() {
                srtf[0], srtf[1], srtf[2]); 
     printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                hpfp[0], hpfp[1], hpfp[2]); 
+       printf("HPF_NP: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
+              hpfnp[0], hpfnp[1], hpfnp[2]);
 
     return 0;
 }

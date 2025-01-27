@@ -304,6 +304,56 @@ char* runHPFP(Process processes[], int count) {
 
 }
 
+char* runHPFNP(Process processes[], int count) {
+    PriorityQueue priorityQueues[MAX_PRIORITY];
+    for (int i = 0; i < MAX_PRIORITY; i++) {
+        initializeQueue(&priorityQueues[i]);
+    }
+    char *result = malloc(100);
+    result[0]='\0';
+    int currentTime = 0;
+    int completedProcesses = 0;
+
+    while (completedProcesses < count) {
+        // Enqueue newly arrived processes
+        for (int i = 0; i < count; i++) {
+            if (processes[i].arrivalTime == currentTime) {
+                enqueue(&priorityQueues[processes[i].priority - 1], &processes[i]);
+            }
+        }
+
+        // Find the highest priority queue with work
+        Process* currentProcess = NULL;
+        for (int i = 0; i < MAX_PRIORITY; i++) {
+            if (!isEmpty(&priorityQueues[i])) {
+                currentProcess = dequeue(&priorityQueues[i]);
+                break;
+            }
+        }
+
+        // If no process is available, CPU idles
+        if (currentProcess == NULL) {
+            currentTime++;
+            continue;
+        }
+
+        // Execute the process until completion
+        if (!currentProcess->started) {
+            currentProcess->startTime = currentTime;
+            currentProcess->started = true;
+        }
+
+        currentTime += currentProcess->remainingTime;
+        currentProcess->remainingTime = 0;
+        currentProcess->endTime = currentTime;
+        completedProcesses++;
+        size_t len = strlen(result);
+        result[len] = currentProcess->name;
+        result[len+1]='\0';
+    }
+    return result;
+}
+
 
 void calculateMetrics(Process processes[], int count, float *avgTurnaround, float *avgWaiting, float *avgResponse, int *throughput) {
     int totalTurnaround = 0, totalWaiting = 0, totalResponse = 0;
