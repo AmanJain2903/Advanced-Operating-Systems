@@ -1,5 +1,6 @@
 # include <stdio.h>
 # include <string.h>
+#include <stdlib.h> 
 # include "common_files_header.h"
 
 int main() {
@@ -9,7 +10,7 @@ int main() {
     int throughput;
     Seeds bestSeeds[5];
     seedGenerator(bestSeeds);
-    float fcfs[3], sjf[3], srtf[3], hpfp[3], hpfnp[3];
+    float fcfs[3], sjf[3], srtf[3], hpfp[3], hpfnp[3],rr[3];
 
     for (int run = 0; run < 5; run++) {
         printf("Run #%d:\n", run + 1);
@@ -56,6 +57,19 @@ int main() {
         srtf[2]+=avgResponse/5;
         resetProcesses(processes, NUM_PROCESSES);
 
+        //RR
+        result = runRR(processes, NUM_PROCESSES);
+        calculateMetrics(processes, NUM_PROCESSES, &avgTurnaround, &avgWaiting, &avgResponse, &throughput);
+        printf("RR Job Sequence : ");
+        printJobSequence(result);
+        printf("RR: Turnaround = %.2f, Waiting = %.2f, Response = %.2f, Throughput = %d\n\n",
+       avgTurnaround, avgWaiting, avgResponse, throughput);
+        rr[0] += avgTurnaround / 5;
+        rr[1] += avgWaiting / 5;
+        rr[2] += avgResponse / 5;
+        resetProcesses(processes, NUM_PROCESSES);
+        free(result);
+
         // HPFP
 
         result = runHPFP(processes, NUM_PROCESSES);
@@ -93,6 +107,8 @@ int main() {
                sjf[0], sjf[1], sjf[2]); 
     printf("SRTF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                srtf[0], srtf[1], srtf[2]); 
+    printf("RR: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
+       rr[0], rr[1], rr[2]);
     printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                hpfp[0], hpfp[1], hpfp[2]); 
        printf("HPF_NP: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
