@@ -209,6 +209,62 @@ char* runSRTF(Process processes[], int count) {
     return result;
 }
 
+char* runRR(Process processes[], int count) {
+    char *result = malloc(100);
+    result[0] = '\0';
+
+    int currentTime = 0;
+    int completed = 0;
+    int queue[MAX_PROCESSES], front = 0, rear = -1;
+
+    // Enqueue processes that have arrived at time 0
+    for (int i = 0; i < count; i++) {
+        if (processes[i].arrivalTime == 0) {
+            queue[++rear] = i;
+        }
+    }
+
+    while (completed < count) {
+        if (front <= rear) {
+            int idx = queue[front++];
+
+            // Process execution
+            if (!processes[idx].started) {
+                processes[idx].startTime = currentTime;
+                processes[idx].started = true;
+            }
+
+            size_t len = strlen(result);
+            result[len] = processes[idx].name;
+            result[len + 1] = '\0';
+
+            processes[idx].remainingTime--;
+            currentTime++;
+
+            // If process completes
+            if (processes[idx].remainingTime == 0) {
+                processes[idx].endTime = currentTime;
+                completed++;
+            } else {
+                // Re-enqueue if not completed
+                queue[++rear] = idx;
+            }
+        } else {
+            // CPU is idle
+            currentTime++;
+        }
+
+        // Enqueue newly arrived processes
+        for (int i = 0; i < count; i++) {
+            if (processes[i].arrivalTime == currentTime) {
+                queue[++rear] = i;
+            }
+        }
+    }
+
+    return result;
+}
+
 // HPFP
 
 // Initialize the queue circular queue is used
