@@ -184,7 +184,6 @@ char* runSRTF(Process processes[], int count) {
 			if(processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0 && processes[i].remainingTime < minRemaining) {
 				shortest = i;
 				minRemaining = processes[i].remainingTime;
-				processes[i].startTime = currentTime;
 				isRunning = 1;	
 			}
 		}
@@ -380,9 +379,11 @@ char* runHPFNP(Process processes[], int count) {
 
         // Find the highest priority queue with work
         Process* currentProcess = NULL;
+        int processIndex = -1;
         for (int i = 0; i < MAX_PRIORITY; i++) {
             if (!isEmpty(&priorityQueues[i])) {
                 currentProcess = dequeue(&priorityQueues[i]);
+                processIndex = i;
                 break;
             }
         }
@@ -412,11 +413,14 @@ char* runHPFNP(Process processes[], int count) {
         if (!currentProcess->started) {
             currentProcess->startTime = currentTime;
             currentProcess->started = true;
+            processes[processIndex].startTime = currentTime;
         }
 
         currentTime += currentProcess->remainingTime;
         currentProcess->remainingTime = 0;
+        processes[processIndex].remainingTime = 0;
         currentProcess->endTime = currentTime;
+        processes[processIndex].endTime = currentTime;
         completedProcesses++;
         size_t len = strlen(result);
         result[len] = currentProcess->name;

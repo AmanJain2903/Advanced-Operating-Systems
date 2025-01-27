@@ -5,12 +5,17 @@
 
 int main() {
     int NUM_PROCESSES=10;
+    Seeds bestSeeds[5];
+    seedGenerator(bestSeeds);
     Process processes[NUM_PROCESSES];
     float avgTurnaround, avgWaiting, avgResponse;
     int throughput;
-    Seeds bestSeeds[5];
-    seedGenerator(bestSeeds);
-    float fcfs[3], sjf[3], srtf[3], hpfp[3], hpfnp[3], rr[3];
+    float fcfs[3]={0};
+    float sjf[3]={0};
+    float srtf[3] = {0};
+    float hpfp[3] = {0}; 
+    float hpfnp[3] = {0};
+    float rr[3] = {0};
 
     for (int run = 0; run < 5; run++) {
         printf("Run #%d:\n", run + 1);
@@ -33,6 +38,7 @@ int main() {
         fcfs[2]+=avgResponse/5;
         resetProcesses(processes, NUM_PROCESSES);
         free(result);
+
 
         // SJF
         result = runSJF(processes, NUM_PROCESSES);
@@ -104,6 +110,7 @@ int main() {
 
 
 
+
        printf("\n");
 
     }
@@ -115,6 +122,8 @@ int main() {
                sjf[0], sjf[1], sjf[2]); 
     printf("SRTF: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                srtf[0], srtf[1], srtf[2]); 
+    printf("RR: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
+               rr[0], rr[1], rr[2]);
     printf("HPF_P: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",
                hpfp[0], hpfp[1], hpfp[2]); 
     printf("HPF_NP: Turnaround = %.2f, Waiting = %.2f, Response = %.2f\n",

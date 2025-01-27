@@ -4,6 +4,7 @@
         "stdio.h": "c",
         "fcfs.h": "c",
         "metrics.h": "c",
-        "limits.h": "c"
+        "limits.h": "c",
+        "string.h": "c"
     }
 }
