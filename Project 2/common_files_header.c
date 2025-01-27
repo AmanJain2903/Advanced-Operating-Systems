@@ -387,11 +387,26 @@ char* runHPFNP(Process processes[], int count) {
             }
         }
 
-        // If no process is available, CPU idles
+        // If no process is available, jump ahead to next available process
         if (currentProcess == NULL) {
-            currentTime++;
+            // Find the earliest arrival time of any remaining process
+            int nextArrivalTime = INT_MAX; // Use a large value as the initial minimum
+            for (int i = 0; i < count; i++) {
+                if (processes[i].remainingTime > 0 && processes[i].arrivalTime > currentTime) {
+                    nextArrivalTime = (processes[i].arrivalTime < nextArrivalTime) ? processes[i].arrivalTime : nextArrivalTime;
+                }
+            }
+
+            // If no future process exists, break the loop (all processes are completed)
+            if (nextArrivalTime == INT_MAX) {
+                break;
+            }
+
+            // Jump the current time to the next arrival time
+            currentTime = nextArrivalTime;
             continue;
         }
+
 
         // Execute the process until completion
         if (!currentProcess->started) {
