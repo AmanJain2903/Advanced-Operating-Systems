@@ -255,6 +255,59 @@ void runHPFP(Process processes[], int count) {
     printStats(processes, count , completedProcesses);
 }
 
+// Function to run HPF (Non-preemptive)
+void runHPFNP(Process processes[], int count) {
+    PriorityQueue priorityQueues[MAX_PRIORITY];
+    for (int i = 0; i < MAX_PRIORITY; i++) {
+        initializeQueue(&priorityQueues[i]);
+    }
+
+    printf("\nHighest Priority First Nonpreemptive:\n");
+    printf("Order of Processes in Execution: _");
+
+    int currentTime = 0;
+    int completedProcesses = 0;
+
+    while (completedProcesses < count) {
+        // Enqueue newly arrived processes
+        for (int i = 0; i < count; i++) {
+            if (processes[i].arrivalTime == currentTime) {
+                enqueue(&priorityQueues[processes[i].priority - 1], &processes[i]);
+            }
+        }
+
+        // Find the highest priority queue with work
+        Process* currentProcess = NULL;
+        for (int i = 0; i < MAX_PRIORITY; i++) {
+            if (!isEmpty(&priorityQueues[i])) {
+                currentProcess = dequeue(&priorityQueues[i]);
+                break;
+            }
+        }
+
+        // If no process is available, CPU idles
+        if (currentProcess == NULL) {
+            currentTime++;
+            continue;
+        }
+
+        // Execute the process until completion
+        if (!currentProcess->started) {
+            currentProcess->startTime = currentTime;
+            currentProcess->started = true;
+        }
+
+        currentTime += currentProcess->remainingTime;
+        currentProcess->remainingTime = 0;
+        currentProcess->endTime = currentTime;
+        completedProcesses++;
+
+        // printf("%c ", currentProcess->name);
+    }
+    printStats(processes, count , completedProcesses);
+}
+
+
 void printStats(Process processes[] , int count, int completedProcesses) {
 
     // Initialize the arrays to store the average statistics for each priority level
