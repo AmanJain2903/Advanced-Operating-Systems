@@ -13,13 +13,16 @@ void generateWorkload(JobQueue *jobQueue) {
     for (int i = 0; i < MAX_JOBS; i++) {
         Job* newJob = (Job*)malloc(sizeof(Job));
         newJob->processName = 'A' + (i % 26);
-        newJob->processSize = (rand() % 4) * 6 + 5; // Sizes: 5, 11, 17, 31 pages
+        int sizes[] = {5, 11, 17, 31};
+        newJob->processSize = sizes[rand() %4]; // Sizes: 5, 11, 17, 31 pages
+        newJob->currentPage = -1;
 
         // Spread arrival times to reduce overlap
-        newJob->arrivalTime = rand() % (SIMULATION_TIME / 2);
+
+        newJob->arrivalTime = rand() % SIMULATION_TIME; // Arrival time in seconds 
 
         // Increase service duration to keep jobs active longer
-        newJob->serviceDuration = (rand() % 20) + 20; // 20-39 seconds
+        newJob->serviceDuration = (rand() % 10) + 20; // 20 - 29 seconds
 
         newJob->next = NULL;
 
@@ -36,35 +39,6 @@ void generateWorkload(JobQueue *jobQueue) {
         }
         jobQueue->count++;
     }
-}
-
-void sortJobsByArrivalTime(JobQueue *jobQueue) {
-    if (jobQueue->head == NULL || jobQueue->head->next == NULL) {
-        return; // No need to sort if the list is empty or has only one job
-    }
-
-    Job* sorted = NULL;
-    Job* current = jobQueue->head;
-
-    while (current != NULL) {
-        Job* next = current->next;
-
-        if (sorted == NULL || sorted->arrivalTime >= current->arrivalTime) {
-            current->next = sorted;
-            sorted = current;
-        } else {
-            Job* temp = sorted;
-            while (temp->next != NULL && temp->next->arrivalTime < current->arrivalTime) {
-                temp = temp->next;
-            }
-            current->next = temp->next;
-            temp->next = current;
-        }
-
-        current = next;
-    }
-
-    jobQueue->head = sorted;
 }
 
 int FIFO(Memory *memory, char processName, int pageNumber, int timestamp) {
@@ -84,37 +58,14 @@ int FIFO(Memory *memory, char processName, int pageNumber, int timestamp) {
         memory->pages[oldestIndex].processName = processName;
         memory->pages[oldestIndex].pageNumber = pageNumber;
         memory->pages[oldestIndex].timestamp = timestamp;
+        memory->pages[oldestIndex].frequency = 1;
+        memory->pages[oldestIndex].lastUsed = timestamp;
         return oldestIndex;
     }
 }
 
 // LFU Implementation
 int LFU(Memory *memory, char processName, int pageNumber, int timestamp) {
-    // Check if the page is already in memory
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName == processName && memory->pages[i].pageNumber == pageNumber) {
-            memory->pages[i].frequency++;
-            memory->pages[i].lastUsed = timestamp;
-            return -1; // Hit
-        }
-    }
-
-    // Remove invalid pages (processName == '\0')
-    int validCount = 0;
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName != '\0') {
-            memory->pages[validCount] = memory->pages[i];
-            validCount++;
-        }
-    }
-    memory->count = validCount;
-
-    // Age frequencies periodically (e.g., every 10 seconds)
-    if (timestamp % 10000 == 0) {
-        for (int i = 0; i < memory->count; i++) {
-            memory->pages[i].frequency = memory->pages[i].frequency / 2; // Decay
-        }
-    }
 
     // Add new page if memory is not full
     if (memory->count < MAX_PAGES) {
@@ -142,6 +93,7 @@ int LFU(Memory *memory, char processName, int pageNumber, int timestamp) {
     // Replace the page
     memory->pages[lfuIndex].processName = processName;
     memory->pages[lfuIndex].pageNumber = pageNumber;
+    memory->pages[lfuIndex].timestamp = timestamp;
     memory->pages[lfuIndex].frequency = 1;
     memory->pages[lfuIndex].lastUsed = timestamp;
     return lfuIndex;
@@ -149,13 +101,6 @@ int LFU(Memory *memory, char processName, int pageNumber, int timestamp) {
 
 // LRU Implementation
 int LRU(Memory *memory, char processName, int pageNumber, int timestamp) {
-    // Check if the page is already in memory
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName == processName && memory->pages[i].pageNumber == pageNumber) {
-            memory->pages[i].lastUsed = timestamp; // Update lastUsed on hit
-            return -1; // Hit
-        }
-    }
 
     // If memory is not full, add the new page
     if (memory->count < MAX_PAGES) {
@@ -167,11 +112,9 @@ int LRU(Memory *memory, char processName, int pageNumber, int timestamp) {
     }
 
     // Find the least recently used VALID page
-    int lruIndex = -1;
-    int minLastUsed = INT_MAX;
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName != '\0' && memory->pages[i].lastUsed < minLastUsed) {
-            minLastUsed = memory->pages[i].lastUsed;
+    int lruIndex = 0;
+    for (int i = 1; i < memory->count; i++) {
+        if (memory->pages[i].lastUsed < memory->pages[lruIndex].lastUsed) {
             lruIndex = i;
         }
     }
@@ -179,36 +122,13 @@ int LRU(Memory *memory, char processName, int pageNumber, int timestamp) {
     // Replace the LRU page
     memory->pages[lruIndex].processName = processName;
     memory->pages[lruIndex].pageNumber = pageNumber;
+    memory->pages[lruIndex].timestamp = timestamp;
+    memory->pages[lruIndex].frequency = 1;
     memory->pages[lruIndex].lastUsed = timestamp;
     return lruIndex;
 }
 
 int MFU(Memory *memory, char processName, int pageNumber, int timestamp) {
-    // Check if the page is already in memory
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName == processName && memory->pages[i].pageNumber == pageNumber) {
-            memory->pages[i].frequency++;
-            memory->pages[i].lastUsed = timestamp;
-            return -1; // Hit
-        }
-    }
-
-    // Remove invalid pages (processName == '\0')
-    int validCount = 0;
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName != '\0') {
-            memory->pages[validCount] = memory->pages[i];
-            validCount++;
-        }
-    }
-    memory->count = validCount;
-
-    // Age frequencies periodically (e.g., every 10 seconds)
-    if (timestamp % 10000 == 0) {
-        for (int i = 0; i < memory->count; i++) {
-            memory->pages[i].frequency = memory->pages[i].frequency / 2; // Decay
-        }
-    }
 
     // Add new page if memory is not full
     if (memory->count < MAX_PAGES) {
@@ -225,33 +145,20 @@ int MFU(Memory *memory, char processName, int pageNumber, int timestamp) {
     for (int i = 1; i < memory->count; i++) {
         if (memory->pages[i].frequency > memory->pages[mfuIndex].frequency) {
             mfuIndex = i;
-        } else if (memory->pages[i].frequency == memory->pages[mfuIndex].frequency) {
-            // Tiebreaker: LRU
-            if (memory->pages[i].lastUsed < memory->pages[mfuIndex].lastUsed) {
-                mfuIndex = i;
-            }
         }
     }
 
     // Replace the page
     memory->pages[mfuIndex].processName = processName;
     memory->pages[mfuIndex].pageNumber = pageNumber;
+    memory->pages[mfuIndex].timestamp = timestamp;
     memory->pages[mfuIndex].frequency = 1;
     memory->pages[mfuIndex].lastUsed = timestamp;
     return mfuIndex;
 }
 
 int RandomPick(Memory *memory, char processName, int pageNumber, int timestamp) {
-    // Check if the page is already in memory
-    for (int i = 0; i < memory->count; i++) {
-        if (memory->pages[i].processName == processName && memory->pages[i].pageNumber == pageNumber) {
-            memory->pages[i].frequency++; // Increment frequency
-            memory->pages[i].lastUsed = timestamp; // Update last used time
-            return -1; // Page is already in memory (hit)
-        }
-    }
 
-    // If the page is not in memory, randomly select a page for eviction
     if (memory->count < MAX_PAGES) {
         memory->pages[memory->count].processName = processName;
         memory->pages[memory->count].pageNumber = pageNumber;
@@ -265,7 +172,136 @@ int RandomPick(Memory *memory, char processName, int pageNumber, int timestamp) 
     int randomIndex = rand() % memory->count;
     memory->pages[randomIndex].processName = processName;
     memory->pages[randomIndex].pageNumber = pageNumber;
+    memory->pages[randomIndex].timestamp = timestamp;
     memory->pages[randomIndex].frequency = 1;
     memory->pages[randomIndex].lastUsed = timestamp;
     return randomIndex; // Return the index of the evicted page
+}
+
+// Function to generate the next page reference based on locality of reference
+int generateNextPageReference(int currentPage, int processSize) {
+    int delta;
+    int randomNumber = rand() % 10 + 1;
+
+    if (currentPage==-1){
+        return 0;
+    }
+
+    // 70% chance of small delta (locality of reference)
+    if (randomNumber <= 7) {
+        delta = (rand() % 3) - 1; // -1, 0, or 1
+    } else {
+        // 30% chance of larger delta
+        delta = (rand() % 8) + 2; 
+        if (rand() % 2 == 0) {
+            delta = -1*delta; // Randomly make it negative
+        }
+    }
+
+    // Calculate the next page reference with wrapping
+    int nextPage = currentPage + delta;
+    if (nextPage < 0) {
+        nextPage += processSize;
+    } else if (nextPage >= processSize) {
+        nextPage -= processSize;
+    }
+
+    return nextPage;
+}
+
+void runSimulation(JobQueue *jobQueue, Memory *memory, int (*replacementAlgorithm)(Memory *, char, int, int), char *algorithmName, double *hitRatioSum, double *missRatioSum, int *swappedInSum) {
+    int hit = 0, miss = 0, referenceCount = 0, swappedInProcesses = 0;
+    Job* activeJobs[MAX_JOBS] = {NULL};
+    int activeJobCount = 0;
+    int pageNumber;
+
+    printf("\n=== Running Simulation with %s Algorithm ===\n", algorithmName);
+    printf("Time (s) | Process | Page Referenced | Page in Memory | Evicted Process/Page\n");
+    printf("---------|---------|-----------------|----------------|----------------------\n");
+
+    Job* currentJob = jobQueue->head;
+
+    for (int globalTime = 0; globalTime < SIMULATION_TIME * 1000; globalTime += REFERENCE_INTERVAL) {
+        // Add jobs that have arrived by this time
+        while (currentJob!=NULL && currentJob->arrivalTime * 1000 <= globalTime && memory->count <= 96) {
+            activeJobs[activeJobCount++] = currentJob;
+            currentJob = currentJob->next;
+        }
+
+        // Process active jobs
+        for (int j = 0; j < activeJobCount; j++) {
+            Job* job = activeJobs[j];
+            if (job == NULL) continue;
+
+            // Check if job has completed
+            if (globalTime >= (job->arrivalTime + job->serviceDuration) * 1000) {
+                // Remove all pages belonging to this job
+                int new_count = 0;
+                for (int k = 0; k < memory->count; k++) {
+                    if (memory->pages[k].processName != job->processName) {
+                        memory->pages[new_count++] = memory->pages[k];
+                    }
+                }
+                memory->count = new_count;
+                activeJobs[j] = NULL; // Mark job as inactive
+                continue;
+            }
+
+            // Generate page reference for active jobs
+            if ((globalTime - job->arrivalTime * 1000) % REFERENCE_INTERVAL == 0) {
+                job->currentPage = generateNextPageReference(job->currentPage, job->processSize);
+
+                int found = 0;
+                for (int k = 0; k < memory->count; k++) {
+                    if (memory->pages[k].processName == job->processName && memory->pages[k].pageNumber == job->currentPage) {
+                        hit++;
+                        found = 1;
+                        memory->pages[k].lastUsed = globalTime;
+                        memory->pages[k].frequency++;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    miss++;
+                    int evictedIndex = replacementAlgorithm(memory, job->processName, job->currentPage, globalTime);
+                    if (evictedIndex != -1) {
+                        printf("%8d | %7c | %15d | %14s | %c/%d\n",
+                               globalTime / 1000, job->processName, job->currentPage, "No", 
+                               memory->pages[evictedIndex].processName, memory->pages[evictedIndex].pageNumber);
+                    } else {
+                        printf("%8d | %7c | %15d | %14s | %s\n",
+                               globalTime / 1000, job->processName, job->currentPage, "Yes", "N/A");
+                    }
+                    swappedInProcesses++;
+                } 
+                else {
+                    printf("%8d | %7c | %15d | %14s | %s\n",
+                           globalTime / 1000, job->processName, job->currentPage, "Yes", "N/A");
+                }
+
+                referenceCount++;
+                if (referenceCount == 100) {
+                    printf("\n=== First 100 References Completed ===\n");
+                    referenceCount++; // Prevent this message from repeating
+                }
+            }
+        }
+    }
+
+    // Calculate hit and miss ratios
+    int totalAccesses = hit + miss;
+    double hitRatio = (double)hit / totalAccesses;
+    double missRatio = (double)miss / totalAccesses;
+
+    printf("\n=== Simulation Results for %s ===\n", algorithmName);
+    printf("Hit Ratio: %.2f\n", hitRatio);
+    printf("Miss Ratio: %.2f\n", missRatio);
+    printf("Processes Swapped-In: %d\n", swappedInProcesses);
+    printf("---------------------------------\n");
+
+    // Update sums for averages
+    *hitRatioSum += hitRatio;
+    *missRatioSum += missRatio;
+    *swappedInSum += swappedInProcesses;
 }
