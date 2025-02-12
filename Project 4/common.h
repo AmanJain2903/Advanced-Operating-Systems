@@ -6,7 +6,7 @@
 #include <time.h>
 
 #define MAX_PAGES 200
-#define MAX_JOBS 150
+#define MAX_JOBS 100
 #define PAGE_SIZE 1 // 1 MB
 #define SIMULATION_TIME 60 // 1 minute
 #define REFERENCE_INTERVAL 100 // 100 ms
