@@ -4,17 +4,11 @@
 int generateNextPageReference(int currentPage, int processSize) {
     int delta;
     if (rand() % 100 < 90) { // 90% probability: reuse recent pages
-        // Reuse one of the last 5 pages (temporal locality)
         delta = (rand() % 5) - 2; // -2, -1, 0, +1, +2
     } else {
-        // 10% probability: random page
-        delta = (rand() % (processSize - 1)) + 1; // Ensure |delta| ≥ 1
-        if (rand() % 2 == 0) {
-            delta = -delta; // Randomly make delta negative
-        }
+        delta = (rand() % (processSize - 1)) + 1;
+        if (rand() % 2 == 0) delta = -delta;
     }
-
-    // Calculate the next page reference with wrapping
     int nextPage = currentPage + delta;
     if (nextPage < 0) nextPage += processSize;
     else if (nextPage >= processSize) nextPage -= processSize;
@@ -25,47 +19,52 @@ void runSimulation(JobQueue *jobQueue, Memory *memory, int (*replacementAlgorith
     int hit = 0, miss = 0, referenceCount = 0, swappedInProcesses = 0;
     Job* activeJobs[MAX_JOBS] = {NULL};
     int activeJobCount = 0;
+    printf("\n=== Running Simulation with %s Algorithm ===\n", algorithmName);
+    printf("Time (s) | Process | Page Referenced | Page in Memory | Evicted Process/Page\n");
+    printf("---------|---------|-----------------|----------------|----------------------\n");
 
-    // Sort jobs by arrival time (already done in generateWorkload)
     Job* currentJob = jobQueue->head;
+    int freePages = MAX_PAGES; // Track free pages
 
-    // Simulate each millisecond (or REFERENCE_INTERVAL)
     for (int globalTime = 0; globalTime < SIMULATION_TIME * 1000; globalTime += REFERENCE_INTERVAL) {
-        // Add jobs that have arrived by this time
-        while (currentJob != NULL && currentJob->arrivalTime * 1000 <= globalTime && activeJobCount < MAX_JOBS) {
+        // Add jobs that have arrived and have enough free pages
+        while (currentJob != NULL && 
+               currentJob->arrivalTime * 1000 <= globalTime && 
+               activeJobCount < MAX_JOBS && 
+               freePages >= 4) { // 4-page rule check
             activeJobs[activeJobCount++] = currentJob;
+            freePages -= 4; // Deduct 4 pages when starting a job
             currentJob = currentJob->next;
         }
 
         // Process active jobs
         for (int j = 0; j < activeJobCount; j++) {
             Job* job = activeJobs[j];
-            if (job == NULL) continue; // Skip if job is NULL
+            if (job == NULL) continue;
 
             // Check if job has completed
             if (globalTime >= (job->arrivalTime + job->serviceDuration) * 1000) {
-                // Remove all pages belonging to this job
+                // Free pages used by this job (simplified: assume 4 pages per job)
+                freePages += 4;
+                // Remove pages from memory
                 int new_count = 0;
                 for (int k = 0; k < memory->count; k++) {
                     if (memory->pages[k].processName != job->processName) {
-                        // Keep pages not belonging to the completed job
-                        memory->pages[new_count] = memory->pages[k];
-                        new_count++;
+                        memory->pages[new_count++] = memory->pages[k];
                     }
                 }
                 memory->count = new_count;
-                activeJobs[j] = NULL; // Mark job as inactive
+                activeJobs[j] = NULL;
                 continue;
             }
 
-            // Generate page reference for active jobs
-            if ((globalTime - job->arrivalTime * 1000) % REFERENCE_INTERVAL == 0) {
+            // Generate page reference
+            int timeSinceStart = globalTime - (job->arrivalTime * 1000);
+            if (timeSinceStart >= 0 && timeSinceStart % REFERENCE_INTERVAL == 0) {
                 int currentPage = rand() % job->processSize;
                 int pageNumber = generateNextPageReference(currentPage, job->processSize);
 
                 int found = 0;
-
-                // Check if the page is already in memory
                 for (int k = 0; k < memory->count; k++) {
                     if (memory->pages[k].processName == job->processName && memory->pages[k].pageNumber == pageNumber) {
                         hit++;
@@ -80,25 +79,23 @@ void runSimulation(JobQueue *jobQueue, Memory *memory, int (*replacementAlgorith
                     miss++;
                     int evictedIndex = replacementAlgorithm(memory, job->processName, pageNumber, globalTime);
                     if (evictedIndex != -1) {
-                        printf("%8d | %7c | %15d | %14s | %c/%d\n",
-                               globalTime / 1000, job->processName, pageNumber, "No", 
+                        printf("%8.1f | %7c | %15d | %14s | %c/%d\n",
+                               globalTime / 1000.0, job->processName, pageNumber, "No", 
                                memory->pages[evictedIndex].processName, memory->pages[evictedIndex].pageNumber);
                     } else {
-                        printf("%8d | %7c | %15d | %14s | %s\n",
-                               globalTime / 1000, job->processName, pageNumber, "Yes", "N/A");
+                        printf("%8.1f | %7c | %15d | %14s | %s\n",
+                               globalTime / 1000.0, job->processName, pageNumber, "Yes", "N/A");
                     }
-
-                    // Increment swappedInProcesses when a new page is loaded into memory
                     swappedInProcesses++;
                 } else {
-                    printf("%8d | %7c | %15d | %14s | %s\n",
-                           globalTime / 1000, job->processName, pageNumber, "Yes", "N/A");
+                    printf("%8.1f | %7c | %15d | %14s | %s\n",
+                           globalTime / 1000.0, job->processName, pageNumber, "Yes", "N/A");
                 }
 
                 referenceCount++;
                 if (referenceCount == 100) {
                     printf("\n=== First 100 References Completed ===\n");
-                    referenceCount++; // Prevent this message from repeating
+                    referenceCount++;
                 }
             }
         }
