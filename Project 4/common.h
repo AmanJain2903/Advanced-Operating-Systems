@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_PAGES 200
-#define MAX_JOBS 100
+#define MAX_PAGES 100
+#define MAX_JOBS 150
 #define PAGE_SIZE 1 // 1 MB
 #define SIMULATION_TIME 60 // 1 minute
 #define REFERENCE_INTERVAL 100 // 100 ms
@@ -16,6 +16,7 @@ typedef struct Job {
     int processSize; // in pages
     int arrivalTime; // in seconds
     int serviceDuration; // in seconds
+    int currentPage; // Current page number
     struct Job* next; // Pointer to the next job in the linked list
 } Job;
 
@@ -47,5 +48,6 @@ int LRU(Memory *memory, char processName, int pageNumber, int timestamp);
 int LFU(Memory *memory, char processName, int pageNumber, int timestamp);
 int MFU(Memory *memory, char processName, int pageNumber, int timestamp);
 int RandomPick(Memory *memory, char processName, int pageNumber, int timestamp);
+void runSimulation(JobQueue *jobQueue, Memory *memory, int (*replacementAlgorithm)(Memory *, char, int, int), char *algorithmName, double *hitRatioSum, double *missRatioSum, int *swappedInSum);
 
 #endif // COMMON_H
