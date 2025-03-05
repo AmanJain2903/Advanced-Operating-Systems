@@ -10,6 +10,7 @@
 
 #define READ_END 0
 #define WRITE_END 1
+#define BUFFER_SIZE 256 // Define BUFFER_SIZE here
 
 void child_process(int child_id, int write_fd);
 

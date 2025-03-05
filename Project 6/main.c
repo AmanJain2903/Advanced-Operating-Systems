@@ -5,23 +5,42 @@
 #include <sys/time.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include "common.h"
 
 #define NUM_CHILDREN 5
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 256
 #define OUTPUT_FILE "output.txt"
+
+FILE *output_file = NULL;
+
+// Signal handler to flush and close the file gracefully
+void handle_signal(int signal) {
+    if (output_file) {
+        fflush(output_file);
+        fclose(output_file);
+        printf("Output file closed due to signal %d.\n", signal);
+    }
+    exit(0);
+}
 
 int main() {
     int fd[NUM_CHILDREN][2];
     pid_t pids[NUM_CHILDREN];
     fd_set read_fds;
     int max_fd = 0;
-    FILE *output_file = fopen(OUTPUT_FILE, "w");
 
+    // Open the output file
+    output_file = fopen(OUTPUT_FILE, "w");
     if (!output_file) {
         perror("Failed to open output file");
         exit(EXIT_FAILURE);
     }
+
+    // Register signal handlers for graceful termination
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
     // Create pipes and fork child processes
     for (int i = 0; i < NUM_CHILDREN; i++) {
@@ -68,14 +87,17 @@ int main() {
         for (int i = 0; i < NUM_CHILDREN; i++) {
             if (FD_ISSET(fd[i][READ_END], &read_fds)) {
                 char buffer[BUFFER_SIZE];
-                ssize_t nread = read(fd[i][READ_END], buffer, BUFFER_SIZE);
+                ssize_t nread = read(fd[i][READ_END], buffer, BUFFER_SIZE - 1);
 
                 if (nread > 0) {
-                    struct timeval tv;
-                    gettimeofday(&tv, NULL);
-                    fprintf(output_file, "%ld:%06ld: %s", tv.tv_sec, tv.tv_usec, buffer);
+                    buffer[nread] = '\0'; // Null-terminate the buffer
+                    fprintf(output_file, "%s", buffer);
+                    fflush(output_file);
                 } else if (nread == 0) {
                     close(fd[i][READ_END]);
+                } else {
+                    perror("read");
+                    exit(EXIT_FAILURE);
                 }
             }
         }
@@ -94,6 +116,13 @@ int main() {
         }
     }
 
+    // Wait for all child processes to terminate
+    for (int i = 0; i < NUM_CHILDREN; i++) {
+        waitpid(pids[i], NULL, 0);
+    }
+
+    // Close the output file
     fclose(output_file);
+    printf("All child processes have terminated. Exiting parent process.\n");
     return 0;
 }
